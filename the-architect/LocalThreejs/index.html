@@ -14,16 +14,8 @@
     .preview-app { width: 100vw; height: 100vh; position: relative; }
     canvas#preview-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
 
-    /* The game's status pill stays minimal — engine.js writes to it on
-       errors. In normal play it's invisible until something happens. */
-    #preview-status {
-      position: fixed; top: 8px; left: 8px;
-      font: 11px ui-monospace, monospace;
-      color: rgba(250,250,247,0.4);
-      background: rgba(11,13,20,0.3);
-      padding: 2px 6px; border-radius: 2px;
-      z-index: 50; pointer-events: none;
-    }
+    /* Status pill kept in DOM (engine writes to it) but never visible. */
+    #preview-status { display: none !important; }
 
     /* The redraw + toggle-mode buttons are wired by engine.js but
        hidden in the game — engine still updates their textContent. */
