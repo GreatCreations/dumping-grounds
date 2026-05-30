@@ -115,20 +115,17 @@ window.addEventListener('keydown', (e) => {
     purgePaintFromLocalStorage();
     return;
   }
-  // Shift + "=" (i.e., "+") — toggle crosshair
-  if (e.shiftKey && e.key === '+') {
+  // X — toggle crosshair. Moved off Shift+= because the engine binds
+  // Equal (=) to swatch-up via event.code (modifier-agnostic), so
+  // Shift+= would fire both handlers on the same keypress.
+  if ((e.key === 'x' || e.key === 'X') && !e.altKey && !e.ctrlKey && !e.metaKey) {
     e.preventDefault();
     crosshairOn = !crosshairOn;
     applyCrosshair();
     return;
   }
-  // "'" — toggle branding footer
-  if (e.key === "'") {
-    e.preventDefault();
-    brandOn = !brandOn;
-    applyBrand();
-    return;
-  }
+  // (No "'" handler — engine binds Quote to swatch-down; the footer is
+  // permanent attribution and intentionally not toggleable in game.)
   // "/" — toggle key reference modal
   if (e.key === '/') {
     e.preventDefault();

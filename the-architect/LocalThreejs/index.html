@@ -17,6 +17,15 @@
     /* Status pill kept in DOM (engine writes to it) but never visible. */
     #preview-status { display: none !important; }
 
+    /* The engine creates an anonymous top-left HUD readout div at boot
+       (engine.js builds it with inline style top:38px; left:12px). It
+       has no id/class to hook, so we match its inline style fingerprint
+       in both serialised forms (with-space and without-space). */
+    body > div[style*="top: 38px"][style*="left: 12px"],
+    body > div[style*="top:38px"][style*="left:12px"] {
+      display: none !important;
+    }
+
     /* The redraw + toggle-mode buttons are wired by engine.js but
        hidden in the game — engine still updates their textContent. */
     #btn-redraw, #btn-toggle-mode {
@@ -159,9 +168,9 @@
           <tr><td><kbd>P</kbd></td><td>Toggle paint mode</td></tr>
           <tr><td><kbd>C</kbd> or <kbd>Shift</kbd></td><td>Crouch</td></tr>
           <tr><td><kbd>,</kbd> <kbd>.</kbd></td><td>Brush smaller / larger (paint mode)</td></tr>
+          <tr><td><kbd>=</kbd> <kbd>'</kbd></td><td>Swatch up / down (paint mode)</td></tr>
           <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Swatch left / right (paint mode)</td></tr>
-          <tr><td><kbd>Shift</kbd> + <kbd>=</kbd></td><td>Toggle crosshair</td></tr>
-          <tr><td><kbd>'</kbd></td><td>Toggle footer credit</td></tr>
+          <tr><td><kbd>X</kbd></td><td>Toggle crosshair</td></tr>
           <tr><td><kbd>/</kbd></td><td>Show / hide this list</td></tr>
           <tr><td><kbd>Alt</kbd> + <kbd>P</kbd></td><td>Save paint to local storage</td></tr>
           <tr><td><kbd>Alt</kbd> + <kbd>O</kbd></td><td>Purge saved paint (forever)</td></tr>
