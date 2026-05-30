@@ -1,0 +1,62 @@
+/* shared.css — V3D Engine — design tokens used by both editor + preview.
+   Inked-comic palette: off-white surfaces, black strokes, coral accent (the
+   single saturated color in the default world). */
+
+:root {
+  --c-fill:     #fafaf7;   /* off-white — walls / floor / ceiling fill */
+  --c-stroke:   #0b0d14;   /* near-black — line-drawing strokes */
+  --c-coral:    #ee7967;   /* coral — the ONLY saturated color, anchored on plant */
+  --c-paper:    #f6f3ec;   /* page-background, slightly warmer than fill */
+  --c-rule:     #e1e1d8;   /* dividers / faint lines */
+  --c-fg:       #0b0d14;   /* foreground text */
+  --c-fg-muted: #6b6f7a;
+  --c-fg-faint: #9ea3ad;
+  --c-bg:       #fafaf7;   /* matches fill — UI lives on paper */
+  --c-bg-elev:  #ffffff;
+  --c-bg-inset: #f0ede5;
+
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+
+  --grid-cell: 12px;       /* pixel size of one grid cell in the 2D editor canvas */
+}
+
+* , *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--c-paper);
+  color: var(--c-fg);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--c-bg-elev);
+  border: 1px solid var(--c-stroke);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 0;
+  transition: background 0.1s ease;
+}
+button:hover { background: var(--c-bg-inset); }
+button:focus-visible { outline: 2px solid var(--c-coral); outline-offset: 1px; }
+button.active { background: var(--c-stroke); color: var(--c-fill); }
+
+a { color: var(--c-stroke); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--c-coral); }
+
+input, select, textarea {
+  font: inherit;
+  background: var(--c-bg-elev);
+  border: 1px solid var(--c-stroke);
+  padding: 4px 6px;
+  border-radius: 0;
+}
+input:focus-visible { outline: 2px solid var(--c-coral); outline-offset: 1px; }

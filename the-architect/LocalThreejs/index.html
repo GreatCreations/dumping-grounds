@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Architect — made in Great Creation Studios Anticontainment System with V3D Engine</title>
+
+  <link rel="stylesheet" href="styles/shared.css" />
+  <link rel="stylesheet" href="styles/preview.css" />
+
+  <style>
+    /* Game-mode overrides + new UI */
+    html, body { margin: 0; padding: 0; background: #0b0d14; color: #fafaf7; overflow: hidden; }
+    .preview-app { width: 100vw; height: 100vh; position: relative; }
+    canvas#preview-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+
+    /* The game's status pill stays minimal — engine.js writes to it on
+       errors. In normal play it's invisible until something happens. */
+    #preview-status {
+      position: fixed; top: 8px; left: 8px;
+      font: 11px ui-monospace, monospace;
+      color: rgba(250,250,247,0.4);
+      background: rgba(11,13,20,0.3);
+      padding: 2px 6px; border-radius: 2px;
+      z-index: 50; pointer-events: none;
+    }
+
+    /* The redraw + toggle-mode buttons are wired by engine.js but
+       hidden in the game — engine still updates their textContent. */
+    #btn-redraw, #btn-toggle-mode {
+      position: absolute; left: -9999px; visibility: hidden;
+    }
+
+    /* Loading overlay — shown while assets initialise; hides after 1.5s. */
+    #loading-overlay {
+      position: fixed; inset: 0;
+      background: #0b0d14;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 18px;
+      z-index: 1000;
+      transition: opacity 0.4s;
+    }
+    #loading-overlay img { width: 120px; height: 120px; object-fit: contain; }
+    #loading-overlay .loading-label { font: 13px ui-monospace, monospace; color: #9a9a9a; }
+
+    /* Click-to-Play overlay — shown when not pointer-locked. */
+    #play-overlay {
+      position: fixed; inset: 0;
+      background: rgba(11,13,20,0.78);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+      z-index: 900;
+      cursor: pointer;
+    }
+    #play-overlay .play-text {
+      font: 600 32px ui-sans-serif, system-ui;
+      color: #fafaf7;
+      letter-spacing: 0.08em;
+    }
+    #play-overlay .play-hint {
+      font: 12px ui-monospace, monospace;
+      color: rgba(250,250,247,0.5);
+    }
+
+    /* Branding footer — small medium-grey, bottom-left corner. */
+    #brand-footer {
+      position: fixed; bottom: 8px; left: 8px;
+      font: 10px ui-sans-serif, system-ui;
+      color: #8a8a8a;
+      pointer-events: none;
+      z-index: 60;
+      max-width: 60ch;
+      line-height: 1.3;
+    }
+
+    /* Key-reference modal — toggled by "/" key. */
+    #key-modal {
+      position: fixed; inset: 0;
+      background: rgba(11,13,20,0.92);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 950;
+    }
+    #key-modal .key-panel {
+      background: #1a1d2a;
+      border: 1px solid #2a2d3a;
+      padding: 28px 36px;
+      border-radius: 6px;
+      max-width: 540px;
+      color: #fafaf7;
+      font: 14px ui-sans-serif, system-ui;
+    }
+    #key-modal h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+      letter-spacing: 0.05em;
+    }
+    #key-modal table { border-collapse: collapse; width: 100%; }
+    #key-modal td { padding: 4px 12px 4px 0; vertical-align: top; }
+    #key-modal kbd {
+      font: 11px ui-monospace, monospace;
+      background: #2a2d3a;
+      border: 1px solid #3a3d4a;
+      padding: 1px 6px;
+      border-radius: 3px;
+      color: #fafaf7;
+    }
+    #key-modal .close-hint {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #6a6d7a;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-app">
+    <canvas id="preview-canvas"></canvas>
+
+    <!-- Status pill — engine writes errors / boot status here -->
+    <div id="preview-status">loading…</div>
+
+    <!-- Crosshair (engine controls visibility via hud.setCrosshair) -->
+    <div id="crosshair">
+      <svg viewBox="0 0 12 12" width="12" height="12">
+        <line x1="6" y1="0" x2="6" y2="12" stroke="white" stroke-width="3"/>
+        <line x1="0" y1="6" x2="12" y2="6" stroke="white" stroke-width="3"/>
+        <line x1="6" y1="0" x2="6" y2="12" stroke="black" stroke-width="1"/>
+        <line x1="0" y1="6" x2="12" y2="6" stroke="black" stroke-width="1"/>
+      </svg>
+    </div>
+
+    <!-- Buttons engine.js binds to; kept off-screen so the wiring works
+         without showing in game. -->
+    <button id="btn-redraw">redraw</button>
+    <button id="btn-toggle-mode">first-person</button>
+
+    <!-- Branding footer — toggleable with ' -->
+    <div id="brand-footer">
+      made in Great Creation Studios Anticontainment System with V3D Engine
+    </div>
+
+    <!-- Click-to-Play overlay -->
+    <div id="play-overlay">
+      <div class="play-text">Click to Play</div>
+      <div class="play-hint">press <kbd style="background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:2px; font-family:ui-monospace,monospace;">/</kbd> in game for controls</div>
+    </div>
+
+    <!-- Loading overlay — shown over Click-to-Play during boot, hides
+         after a short delay. -->
+    <div id="loading-overlay">
+      <img src="loading.gif" alt="loading…" />
+      <div class="loading-label">loading the architect…</div>
+    </div>
+
+    <!-- Key reference modal — toggled by "/" -->
+    <div id="key-modal">
+      <div class="key-panel">
+        <h2>Controls</h2>
+        <table>
+          <tr><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Move</td></tr>
+          <tr><td><kbd>Space</kbd></td><td>Jump</td></tr>
+          <tr><td><kbd>Mouse</kbd></td><td>Look around</td></tr>
+          <tr><td><kbd>Left Click</kbd></td><td>Paint (when in paint mode) / lock pointer</td></tr>
+          <tr><td><kbd>V</kbd></td><td>First-person ↔ Leashed camera</td></tr>
+          <tr><td><kbd>R</kbd></td><td>Reset to spawn</td></tr>
+          <tr><td><kbd>P</kbd></td><td>Toggle paint mode</td></tr>
+          <tr><td><kbd>C</kbd> or <kbd>Shift</kbd></td><td>Crouch</td></tr>
+          <tr><td><kbd>,</kbd> <kbd>.</kbd></td><td>Brush smaller / larger (paint mode)</td></tr>
+          <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Swatch left / right (paint mode)</td></tr>
+          <tr><td><kbd>Shift</kbd> + <kbd>=</kbd></td><td>Toggle crosshair</td></tr>
+          <tr><td><kbd>'</kbd></td><td>Toggle footer credit</td></tr>
+          <tr><td><kbd>/</kbd></td><td>Show / hide this list</td></tr>
+          <tr><td><kbd>Alt</kbd> + <kbd>P</kbd></td><td>Save paint to local storage</td></tr>
+          <tr><td><kbd>Alt</kbd> + <kbd>O</kbd></td><td>Purge saved paint (forever)</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Release pointer / close this</td></tr>
+        </table>
+        <div class="close-hint">press <kbd>/</kbd> again or <kbd>Esc</kbd> to close</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The bundled game (engine + Three.js + UI hooks) — single IIFE -->
+  <script src="game.bundle.js"></script>
+</body>
+</html>
