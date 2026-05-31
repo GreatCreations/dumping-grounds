@@ -22,15 +22,43 @@ function clearWaiting() { playOverlay && playOverlay.classList.remove('waiting')
 function setWaiting()   { playOverlay && playOverlay.classList.add('waiting'); }
 function hideLoading()  { loadingOverlay && (loadingOverlay.style.display = 'none'); }
 
+// Chrome enforces a ~1.25s cooldown after Esc-to-exit-pointer-lock during
+// which the next requestPointerLock gets granted-then-immediately-revoked.
+// If the user clicked too fast, they'd see a flash and bounce back to the
+// overlay — i.e. needing to click twice. We block clicks on the overlay
+// during the cooldown window and show the spinner so the wait is visible.
+const POINTER_LOCK_COOLDOWN_MS = 1500;
+let _hadLockBefore = false;
+let _cooldownTimer = null;
+
 document.addEventListener('pointerlockchange', () => {
   if (document.pointerLockElement) {
     // Lock acquired — drop the spinner state and hide the overlay.
+    _hadLockBefore = true;
+    clearTimeout(_cooldownTimer);
     clearWaiting();
     hideOverlay();
+    if (playOverlay) playOverlay.style.pointerEvents = '';
   } else {
-    // Lock lost — show overlay back in its idle "Click to Play" form.
-    clearWaiting();
-    showOverlay();
+    // Lock lost. If we had it before, enter cooldown: show overlay with
+    // spinner, disable clicks for the Chrome cooldown window, then swap
+    // back to clickable "Click to Play".
+    if (_hadLockBefore) {
+      showOverlay();
+      setWaiting();
+      if (playOverlay) playOverlay.style.pointerEvents = 'none';
+      clearTimeout(_cooldownTimer);
+      _cooldownTimer = setTimeout(() => {
+        if (!document.pointerLockElement) {
+          clearWaiting();
+          if (playOverlay) playOverlay.style.pointerEvents = '';
+        }
+      }, POINTER_LOCK_COOLDOWN_MS);
+    } else {
+      // Initial "Click to Play" state — no cooldown needed.
+      clearWaiting();
+      showOverlay();
+    }
   }
 });
 
