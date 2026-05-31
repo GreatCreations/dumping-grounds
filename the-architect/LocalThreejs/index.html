@@ -63,6 +63,23 @@
       color: rgba(250,250,247,0.5);
     }
 
+    /* While waiting for pointer-lock, the play-text/hint hide and a
+       CSS spinner takes their place so the gap feels alive. The .waiting
+       class is set on #play-overlay by game-entry.js on click; cleared
+       by pointerlockchange when lock succeeds. */
+    #play-overlay.waiting .play-text,
+    #play-overlay.waiting .play-hint { display: none; }
+    #play-overlay .play-spinner { display: none; }
+    #play-overlay.waiting .play-spinner {
+      display: block;
+      width: 56px; height: 56px;
+      border: 4px solid rgba(250,250,247,0.18);
+      border-top-color: #fafaf7;
+      border-radius: 50%;
+      animation: play-spin 0.9s linear infinite;
+    }
+    @keyframes play-spin { to { transform: rotate(360deg); } }
+
     /* Branding footer — small medium-grey, bottom-left corner. */
     #brand-footer {
       position: fixed; bottom: 8px; left: 8px;
@@ -145,6 +162,7 @@
     <div id="play-overlay">
       <div class="play-text">Click to Play</div>
       <div class="play-hint">press <kbd style="background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:2px; font-family:ui-monospace,monospace;">/</kbd> in game for controls</div>
+      <div class="play-spinner" aria-label="loading"></div>
     </div>
 
     <!-- Loading overlay — shown over Click-to-Play during boot, hides

@@ -18,11 +18,20 @@ const loadingOverlay = document.getElementById('loading-overlay');
 
 function showOverlay()  { playOverlay && (playOverlay.style.display = 'flex'); }
 function hideOverlay()  { playOverlay && (playOverlay.style.display = 'none'); }
+function clearWaiting() { playOverlay && playOverlay.classList.remove('waiting'); }
+function setWaiting()   { playOverlay && playOverlay.classList.add('waiting'); }
 function hideLoading()  { loadingOverlay && (loadingOverlay.style.display = 'none'); }
 
 document.addEventListener('pointerlockchange', () => {
-  if (document.pointerLockElement) hideOverlay();
-  else                              showOverlay();
+  if (document.pointerLockElement) {
+    // Lock acquired — drop the spinner state and hide the overlay.
+    clearWaiting();
+    hideOverlay();
+  } else {
+    // Lock lost — show overlay back in its idle "Click to Play" form.
+    clearWaiting();
+    showOverlay();
+  }
 });
 
 // Pre-create the AudioContext on mousedown (one event earlier than click)
@@ -44,14 +53,22 @@ playOverlay && playOverlay.addEventListener('click', () => {
   const canvas = document.getElementById('preview-canvas');
   if (!canvas) return;
   prearmAudio();
-  hideOverlay();
+  // Keep the overlay visible during the browser's pointer-lock
+  // acquisition window, but swap to a spinner so the gap reads as
+  // "working" rather than "stuck". Cleared by pointerlockchange when
+  // lock succeeds, or by the safety timeout below if it fails.
+  setWaiting();
   try {
-    // unadjustedMovement gets Chrome's fast path; option is ignored by
-    // older browsers and by Firefox.
     canvas.requestPointerLock?.({ unadjustedMovement: true });
   } catch (e) {
     try { canvas.requestPointerLock?.(); } catch (e2) { console.warn('[game] pointerLock request failed:', e2); }
   }
+  // Safety net: if pointer lock never fires pointerlockchange (e.g.,
+  // the browser silently denies the request), restore the idle overlay
+  // after 4s so the player isn't stuck staring at a spinner.
+  setTimeout(() => {
+    if (!document.pointerLockElement) clearWaiting();
+  }, 4000);
 });
 
 // Hide the loading GIF as soon as the engine has rendered. Poll the
