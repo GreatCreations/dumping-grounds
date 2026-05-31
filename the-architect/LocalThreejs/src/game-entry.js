@@ -25,22 +25,61 @@ document.addEventListener('pointerlockchange', () => {
   else                              showOverlay();
 });
 
-// Pointer lock must be triggered from a user gesture. The full-screen
-// overlay covers the canvas (blocks canvas clicks from reaching mouse.js's
-// pointer-lock listener), so the overlay handles the click directly: hide
-// itself and request pointer lock on the canvas. This is the click-to-play
-// handoff.
+// Pre-create the AudioContext on mousedown (one event earlier than click)
+// so its ~100ms construction cost doesn't fall in the click→pointer-lock
+// gap. Web Audio requires a user gesture, mousedown counts.
+let _audioPrearmed = false;
+function prearmAudio() {
+  if (_audioPrearmed) return;
+  _audioPrearmed = true;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) { const c = new AC(); if (c.state === 'suspended') c.resume(); }
+  } catch {}
+}
+
+// Show a "Locking pointer…" hint on the overlay during the browser's
+// pointer-lock acquisition window so the gap doesn't feel dead. Cleared
+// by pointerlockchange (overlay hides) or after a 2s timeout fallback.
+const playText = playOverlay?.querySelector('.play-text');
+const playHint = playOverlay?.querySelector('.play-hint');
+function showLockingFeedback() {
+  if (playText) playText.textContent = 'Locking pointer…';
+  if (playHint) playHint.textContent = 'one second';
+}
+
+playOverlay && playOverlay.addEventListener('mousedown', prearmAudio);
+
 playOverlay && playOverlay.addEventListener('click', () => {
   const canvas = document.getElementById('preview-canvas');
   if (!canvas) return;
-  hideOverlay();
-  try { canvas.requestPointerLock?.(); } catch (e) { console.warn('[game] pointerLock request failed:', e); }
+  prearmAudio();
+  showLockingFeedback();
+  // Defer the hide by a beat so the "Locking pointer…" text is visible
+  // during the browser's acquisition window. pointerlockchange will
+  // hide the overlay outright the instant lock succeeds.
+  try {
+    // unadjustedMovement gets Chrome's fast path; option is ignored by
+    // older browsers and by Firefox.
+    canvas.requestPointerLock?.({ unadjustedMovement: true });
+  } catch (e) {
+    try { canvas.requestPointerLock?.(); } catch (e2) { console.warn('[game] pointerLock request failed:', e2); }
+  }
 });
 
-// Hide the loading GIF once the engine has had a tick to set up the scene.
-// engine.js is responsible for status pill updates; we just want the GIF
-// gone once the canvas has something to show.
-setTimeout(hideLoading, 1500);
+// Hide the loading GIF as soon as the engine has rendered. Poll the
+// V3D.debug surface (engine exposes scene + body once boot finishes)
+// instead of using a fixed 1.5s timer — fast loads reach Click-to-Play
+// sooner; an 800ms fallback covers cases where V3D.debug isn't ready.
+let _loadingPoll;
+function tryHideLoading() {
+  if (window.V3D?.debug?.scene?.children?.length > 0) {
+    hideLoading();
+    clearInterval(_loadingPoll);
+  }
+}
+_loadingPoll = setInterval(tryHideLoading, 50);
+setTimeout(() => { clearInterval(_loadingPoll); hideLoading(); }, 800);
 
 // ---- Paint persistence (Alt+P save, Alt+O purge) ----
 // Engine's `state.jpegs` plus any painting sidecar is what we persist.
@@ -98,8 +137,10 @@ function applyCrosshair() { setCrosshair(crosshairOn); }
 function applyBrand()     { if (brandFooter) brandFooter.style.display = brandOn ? '' : 'none'; }
 function applyKeyModal()  { if (keyModal) keyModal.style.display = keyModalOn ? 'flex' : 'none'; }
 
-// Set initial states once engine boot has likely set crosshair.
-setTimeout(() => { applyCrosshair(); applyBrand(); applyKeyModal(); }, 600);
+// Set initial states once engine boot has likely set crosshair. Engine
+// boot is fast — 100ms is more than enough — and shorter means the
+// crosshair appears closer to when the canvas first paints.
+setTimeout(() => { applyCrosshair(); applyBrand(); applyKeyModal(); }, 100);
 
 // ---- Key handlers ----
 window.addEventListener('keydown', (e) => {
