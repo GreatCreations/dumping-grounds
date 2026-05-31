@@ -38,26 +38,13 @@ function prearmAudio() {
   } catch {}
 }
 
-// Show a "Locking pointer…" hint on the overlay during the browser's
-// pointer-lock acquisition window so the gap doesn't feel dead. Cleared
-// by pointerlockchange (overlay hides) or after a 2s timeout fallback.
-const playText = playOverlay?.querySelector('.play-text');
-const playHint = playOverlay?.querySelector('.play-hint');
-function showLockingFeedback() {
-  if (playText) playText.textContent = 'Locking pointer…';
-  if (playHint) playHint.textContent = 'one second';
-}
-
 playOverlay && playOverlay.addEventListener('mousedown', prearmAudio);
 
 playOverlay && playOverlay.addEventListener('click', () => {
   const canvas = document.getElementById('preview-canvas');
   if (!canvas) return;
   prearmAudio();
-  showLockingFeedback();
-  // Defer the hide by a beat so the "Locking pointer…" text is visible
-  // during the browser's acquisition window. pointerlockchange will
-  // hide the overlay outright the instant lock succeeds.
+  hideOverlay();
   try {
     // unadjustedMovement gets Chrome's fast path; option is ignored by
     // older browsers and by Firefox.

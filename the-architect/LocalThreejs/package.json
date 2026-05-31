@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/game-entry.js --bundle --format=iife --global-name=V3D --outfile=game.bundle.js --target=es2020 --loader:.glsl=text --loader:.wasm=binary"
+    "build": "esbuild src/game-entry.js --bundle --minify --format=iife --global-name=V3D --outfile=game.bundle.js --target=es2020 --loader:.glsl=text --loader:.wasm=binary"
   },
   "dependencies": {
     "three": "0.165.0",
