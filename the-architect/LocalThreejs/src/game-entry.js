@@ -47,17 +47,33 @@ function prearmAudio() {
   } catch {}
 }
 
-playOverlay && playOverlay.addEventListener('mousedown', prearmAudio);
+// Apply the spinner state on mousedown — fires before click, giving
+// the browser a clean paint window so the spinner is visible BEFORE
+// requestPointerLock kicks off Chrome's pointer-lock acquisition delay.
+// Also pre-arm audio here so its construction cost is out of the way
+// by the time click fires.
+playOverlay && playOverlay.addEventListener('mousedown', () => {
+  prearmAudio();
+  setWaiting();
+});
+
+// Safety: if mousedown fired but click didn't follow (user dragged away,
+// or never released over the overlay), revert after a short window.
+let _mousedownGuard = null;
+playOverlay && playOverlay.addEventListener('mousedown', () => {
+  clearTimeout(_mousedownGuard);
+  _mousedownGuard = setTimeout(() => {
+    if (!document.pointerLockElement && playOverlay?.style.display !== 'none') {
+      clearWaiting();
+    }
+  }, 1500);
+});
 
 playOverlay && playOverlay.addEventListener('click', () => {
+  clearTimeout(_mousedownGuard);
   const canvas = document.getElementById('preview-canvas');
   if (!canvas) return;
-  prearmAudio();
-  // Keep the overlay visible during the browser's pointer-lock
-  // acquisition window, but swap to a spinner so the gap reads as
-  // "working" rather than "stuck". Cleared by pointerlockchange when
-  // lock succeeds, or by the safety timeout below if it fails.
-  setWaiting();
+  // .waiting class is already applied from mousedown. Just request lock.
   try {
     canvas.requestPointerLock?.({ unadjustedMovement: true });
   } catch (e) {
