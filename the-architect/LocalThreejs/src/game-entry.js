@@ -181,7 +181,15 @@ let crosshairOn = true;            // default ON
 let brandOn     = true;            // default ON
 let keyModalOn  = false;
 
-function applyCrosshair() { setCrosshair(crosshairOn); }
+function applyCrosshair() {
+  setCrosshair(crosshairOn);
+  // The engine reads state.hud.crosshair.enabled every frame and overrides
+  // our DOM-level call — so update state too so the toggle sticks.
+  const stateMod = window.V3D?.debug?.state;
+  if (stateMod?.update) {
+    stateMod.update(s => { if (s?.hud?.crosshair) s.hud.crosshair.enabled = crosshairOn; });
+  }
+}
 function applyBrand()     { if (brandFooter) brandFooter.style.display = brandOn ? '' : 'none'; }
 function applyKeyModal()  { if (keyModal) keyModal.style.display = keyModalOn ? 'flex' : 'none'; }
 

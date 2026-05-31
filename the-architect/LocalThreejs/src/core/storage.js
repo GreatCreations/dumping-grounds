@@ -7,7 +7,11 @@ import { GAME_LEVEL, GAME_SLUG } from './embedded-level.js';
 const PAINT_KEY = `v3d.game.${GAME_SLUG}.paint`;
 
 export async function load(slug = GAME_SLUG) {
-  return JSON.parse(JSON.stringify(GAME_LEVEL));
+  const level = JSON.parse(JSON.stringify(GAME_LEVEL));
+  // Game-instance default: crosshair ON in first-person regardless of what
+  // the editor saved. Player can toggle off with X at runtime.
+  if (level?.hud?.crosshair) level.hud.crosshair.enabled = true;
+  return level;
 }
 
 export async function save() { /* read-only */ }
