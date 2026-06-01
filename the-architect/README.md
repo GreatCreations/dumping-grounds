@@ -1,8 +1,8 @@
 # The Architect
 
-A playable game instance built with the V3D Engine, hosted as static files. One scene, one level — explore it from a first-person or leashed-third-person camera.
+A playable game instance built with the V3DD Engine, hosted as static files. One scene, one level — explore it from a first-person or leashed-third-person camera.
 
-> made in Great Creation Studios Anticontainment System with V3D Engine
+> made in Great Creation Studios Anticontainment System with V3DD Engine
 
 ## Play it
 
@@ -46,4 +46,4 @@ npm run build                        # esbuild → game.bundle.js
 
 ## Engine
 
-V3D Engine (private development at `D:\V3D Dev\`). This game folder is fully self-contained and does not require the editor or preview to run.
+V3DD Engine (private development at `D:\V3D Dev\`). This game folder is fully self-contained and does not require the editor or preview to run.

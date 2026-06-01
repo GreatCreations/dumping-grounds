@@ -4,7 +4,7 @@
 // Editor (window A) publishes state changes; Preview (window B) receives them
 // and updates without a server roundtrip. Pure client-side. Same-origin only.
 //
-// Every message carries a hidden `_signed` field as the V3D Engine identity
+// Every message carries a hidden `_signed` field as the V3DD Engine identity
 // stamp — easter-egg Layer 1. (Receivers don't gate on this; it's just there.)
 
 import * as state from './state.js';
