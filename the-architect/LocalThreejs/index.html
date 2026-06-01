@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Architect — made in Great Creation Studios Anticontainment System with V3D Engine</title>
 
-  <!-- Favicon: reuse the loading.gif brand mark so the tab carries the same
-       Great Creation Studios identity as the in-game watermark. -->
-  <link rel="icon" type="image/gif" href="loading.gif" />
+  <!-- Favicon: the canonical Great Creation Studios brand glyph, same
+       file as Portfolio's site/favicon-gc.png. -->
+  <link rel="icon" type="image/png" href="favicon-gc.png" />
 
   <link rel="stylesheet" href="styles/shared.css" />
   <link rel="stylesheet" href="styles/preview.css" />
@@ -83,17 +83,6 @@
       animation: play-spin 0.9s linear infinite;
     }
     @keyframes play-spin { to { transform: rotate(360deg); } }
-
-    /* Branding footer — small medium-grey, bottom-left corner. */
-    #brand-footer {
-      position: fixed; bottom: 8px; left: 8px;
-      font: 10px ui-sans-serif, system-ui;
-      color: #8a8a8a;
-      pointer-events: none;
-      z-index: 60;
-      max-width: 60ch;
-      line-height: 1.3;
-    }
 
     /* Bottom-right brand watermark — mirrors the 3D viewer's pattern.
        Loading.gif spinner reused as the brand mark; clickable link back
@@ -185,11 +174,6 @@
          without showing in game. -->
     <button id="btn-redraw">redraw</button>
     <button id="btn-toggle-mode">first-person</button>
-
-    <!-- Branding footer — toggleable with ' -->
-    <div id="brand-footer">
-      made in Great Creation Studios Anticontainment System with V3D Engine
-    </div>
 
     <!-- Click-to-Play overlay -->
     <div id="play-overlay">
